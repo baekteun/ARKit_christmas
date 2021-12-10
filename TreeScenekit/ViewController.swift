@@ -8,7 +8,6 @@
 import UIKit
 import SceneKit
 import ARKit
-
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
@@ -23,10 +22,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.showsStatistics = true
         
         // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
         
-        // Set the scene to the view
-        sceneView.scene = scene
+        
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -45,17 +43,28 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Pause the view's session
         sceneView.session.pause()
     }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touchLocation = touches.first?.location(in: sceneView) else {
+            print("Non touch")
+            return
+        }
+        guard let query = sceneView.raycastQuery(from: touchLocation, allowing: .estimatedPlane, alignment: .horizontal) else {
+            print("Couldn't create a query!")
+            return
+        }
+        guard let result = sceneView.session.raycast(query).first else {
+            print("Couldn't match the raycast with a plane.")
+            return
+        }
+        let treeScene = SCNScene(named: "art.scnassets/tree.scn")!
+        let treeNode = treeScene.rootNode.childNode(withName: "container", recursively: true) ?? .init()
+        
+        treeNode.transform = SCNMatrix4(result.worldTransform)
+        
+        sceneView.scene.rootNode.addChildNode(treeNode)
+    }
 
     // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
     
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
@@ -71,4 +80,5 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
     }
+    
 }
